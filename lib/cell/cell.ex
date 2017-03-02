@@ -3,6 +3,7 @@ defmodule Gol.Cell do
   Each cell keeps track of its position and its alive? property (true or false)
   """
   alias Gol.Cell
+  alias Gol.Helper
   defstruct [alive?: nil, position: {nil, nil}]
 
   @doc """
@@ -21,7 +22,7 @@ defmodule Gol.Cell do
     receive do
       {board, from} ->
         new_self = board
-        # |> Helper.relevant_cells(position)
+        # |> Helper.neighbors(position)
         # |> Enums.reduce(fn cell -> cell.alive? end)
         |> assess(self)
         |> (&(send(from, IO.inspect(&1)))).()
@@ -30,7 +31,7 @@ defmodule Gol.Cell do
   end
 
   @doc """
-  sets alive? based on count 
+  updates alive? based on count
   """
   def assess(count, self) when count < 2 do
     %{self | alive?: false}
@@ -42,7 +43,7 @@ defmodule Gol.Cell do
     # live and also rebirth
     %{self | alive?: true}
   end
-  def assess(count, self) do
+  def assess(_count, self) do
     # live but no rebirth
     self
   end
