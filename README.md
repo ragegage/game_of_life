@@ -1,19 +1,20 @@
 # Gol
 
-**TODO: Add description**
+Gol is a Conway's Game of Life cellular automata simulator for the terminal,
+written in Elixir.
 
-## Installation
+## To Run
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `gol` to your list of dependencies in `mix.exs`:
++ `clone` this Repo
++ `cd` to this project's directory
++ open up the project in IEx (`iex -S mix`)
++ start the process with `Gol.hello`
 
-```elixir
-def deps do
-  [{:gol, "~> 0.1.0"}]
-end
-```
+## Architecture
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/gol](https://hexdocs.pm/gol).
+This is a very simple implementation (architecture-wise), using only looping
+processes and not GenServers.
 
+The defaults can be edited by changing the settings in `gol.ex` as well as by
+starting a `Gol.Board` process directly and passing in an initial starting
+state.
