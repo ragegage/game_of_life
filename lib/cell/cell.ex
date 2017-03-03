@@ -20,7 +20,7 @@ defmodule Gol.Cell do
 
   defp loop(self) do
     receive do
-      {board, from} ->
+      {{:turn, board}, from} ->
         new_self = board
         # |> Helper.neighbors(position)
         # |> Enums.reduce(fn cell -> cell.alive? end)
