@@ -31,20 +31,20 @@ defmodule Gol.Helper do
   end
 
   defp create_diffs(diffs, position) do
-    Enum.map(diffs, fn diff -> 
-      {elem(diff, 0) + elem(position, 0), elem(diff, 1) + elem(position, 1)} 
+    Enum.map(diffs, fn diff ->
+      {elem(diff, 0) + elem(position, 0), elem(diff, 1) + elem(position, 1)}
     end)
   end
 
   defp no_negatives(positions) do
-    Enum.reject(positions, fn pos -> 
+    Enum.reject(positions, fn pos ->
       elem(pos, 0) < 0 || elem(pos, 1) < 0
     end)
   end
 
   defp on_board(positions, board) do
-    Enum.filter(positions, fn pos -> 
-      elem(pos, 0) < board.x && elem(pos, 1) < board.y
+    Enum.filter(positions, fn pos ->
+      elem(pos, 0) <= board.x && elem(pos, 1) <= board.y
     end)
   end
 end

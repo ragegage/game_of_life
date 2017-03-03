@@ -8,7 +8,7 @@ defmodule Gol.Cell do
 
   @doc """
   creates a new cell
-  example usage: 
+  example usage:
   pid = spawn(fn -> Gol.Cell.new(%{position: {0,0}, alive?: true}) end)
   or
   pid2 = spawn(Gol.Cell, :new, [%{position: {0,0}, alive?: true}])
@@ -21,12 +21,18 @@ defmodule Gol.Cell do
   defp loop(self) do
     receive do
       {{:turn, board}, from} ->
-        new_self = board
-        # |> Helper.neighbors(position)
-        # |> Enums.reduce(fn cell -> cell.alive? end)
+        board
+        |> Helper.neighbors(self.position)
+        |> Enum.reduce(0, fn(cell, acc) ->
+          if Map.get(board.snapshot, cell), do: acc + 1, else: acc
+        end)
         |> assess(self)
-        |> (&(send(from, IO.inspect(&1)))).()
-        loop(new_self)
+        |> (&(send(from, {:cell, &1}))).()
+        |> fn res -> loop(elem(res, 1)) end.()
+      other ->
+        IO.puts("other")
+        IO.inspect(other)
+        loop(self)
     end
   end
 
