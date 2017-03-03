@@ -8,7 +8,9 @@ written in Elixir.
 + `clone` this Repo
 + `cd` to this project's directory
 + open up the project in IEx (`iex -S mix`)
-+ start the process with `Gol.hello`
++ start the process
+  + Use `Gol.hello()` to start a 15 x 15 square world
+  + Use `Gol.hello(size)` to start a `size` x `size` world
 
 ## Architecture
 
