@@ -11,6 +11,7 @@ written in Elixir.
 + start the process
   + Use `Gol.hello()` to start a 15 x 15 square world
   + Use `Gol.hello(size)` to start a `size` x `size` world
+    + (it seems to start having trouble rendering cleanly at around 30 x 30)
 
 ## Architecture
 
