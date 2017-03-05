@@ -14,15 +14,21 @@ defmodule Gol do
   """
   def hello do
     pid = spawn(Gol.Board, :new, [%{x: 15, y: 15}])
-    loop(pid)
+    send(pid, {:turn, self()})
+    loop(1)
   end
   def hello(size) do
     pid = spawn(Gol.Board, :new, [%{x: size, y: size}])
-    loop(pid)
-  end
-  defp loop(pid) do
-    Process.sleep(200)
     send(pid, {:turn, self()})
-    loop(pid)
+    loop(1)
+  end
+  defp loop(turn_num) do
+    receive do
+      {:print, from} ->
+        IO.puts(turn_num)
+        Process.sleep(100)
+        send(from, {:turn, self()})
+        loop(turn_num + 1)
+    end
   end
 end

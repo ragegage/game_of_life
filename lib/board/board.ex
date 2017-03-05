@@ -2,7 +2,7 @@ defmodule Gol.Board do
   @doc """
   board holds the cell_pids, its x and y boundaries, and a snapshot of the game state
   """
-  defstruct x: nil, y: nil, snapshot: %{}, cell_pids: []
+  defstruct x: nil, y: nil, snapshot: %{}, cell_pids: [], count: 0, from: nil
   alias Gol.Cell
 
   @doc """
@@ -14,7 +14,7 @@ defmodule Gol.Board do
 
 
   snapshot = %{{0,0} => true, {0,1} => true, {0,2} => true, {1,0} => true, {1,1} => true, {1,2} => true, {2,0} => true, {2,1} => true, {2,2} => true, }
-  
+
   pid = spawn(Gol.Board, :new, [%{x: 2, y: 2, snapshot: snapshot}])
   """
   def new(%{x: x, y: y, snapshot: snapshot} = size) do
@@ -39,7 +39,7 @@ defmodule Gol.Board do
         Enum.map(self.cell_pids, fn cell ->
           send(cell, {{:turn, self}, self()})
         end)
-        loop(self)
+        loop(%{self | count: 0, from: from})
       {:cell, data} ->
         data
         |> create_snapshot(self)
@@ -59,16 +59,24 @@ defmodule Gol.Board do
   end
 
   defp create_snapshot(cell, self) do
-    %{self | snapshot: Map.put(self.snapshot, cell.position, cell.alive?)}
+    self = %{self | snapshot: Map.put(self.snapshot, cell.position, cell.alive?)}
+    %{self | count: self.count + 1}
   end
 
   # returns a string; allows IO.puts
-  def render(%Gol.Board{x: x, y: y, snapshot: snapshot, cell_pids: _cells} = self) do
+  defp render(%Gol.Board{x: x, y: y, snapshot: snapshot,
+                        cell_pids: _cells, count: count, from: from} = self)
+                        when count == x * y do
     0..y
     |> Enum.to_list
     |> Enum.map(fn row_index -> row_to_s(row_index, x, snapshot) end)
     |> Enum.join("\n")
     |> print
+    send(self.from, {:print, self()})
+    self
+  end
+  defp render(%Gol.Board{x: x, y: y, snapshot: snapshot,
+                        cell_pids: _cells, count: count, from: from} = self) do
     self
   end
 
@@ -80,7 +88,7 @@ defmodule Gol.Board do
   defp row_to_s(row_index, cols, snapshot) do
     0..cols
     |> Enum.to_list
-    |> Enum.map(fn col_index -> 
+    |> Enum.map(fn col_index ->
       cell_to_s(Map.get(snapshot, {col_index, row_index}))
     end)
     |> Enum.join
@@ -112,7 +120,7 @@ defmodule Gol.Board do
   defp create_cell(col, row) do
     if (:rand.uniform(2) - 1 == 1) do
       {col, row, true}
-    else 
+    else
       {col, row, false}
     end
   end
