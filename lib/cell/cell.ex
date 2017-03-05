@@ -8,7 +8,8 @@ defmodule Gol.Cell do
 
   @doc """
   creates a new cell
-  example usage:
+  
+  Example usage:
   pid = spawn(fn -> Gol.Cell.new(%{position: {0,0}, alive?: true}) end)
   or
   pid2 = spawn(Gol.Cell, :new, [%{position: {0,0}, alive?: true}])

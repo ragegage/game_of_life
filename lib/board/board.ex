@@ -9,9 +9,9 @@ defmodule Gol.Board do
   receives x and y of board size and either a snapshot or none
   creates cells
 
+  Examples of usage:
   snapshot = %{{0,0} => true, {0,1} => true, {1,0} => true, {1,1} => true, }
   pid = spawn(Gol.Board, :new, [%{x: 1, y: 1, snapshot: snapshot}])
-
 
   snapshot = %{{0,0} => true, {0,1} => true, {0,2} => true, {1,0} => true, {1,1} => true, {1,2} => true, {2,0} => true, {2,1} => true, {2,2} => true, }
 

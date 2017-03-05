@@ -4,13 +4,10 @@ defmodule Gol do
   """
 
   @doc """
-  Hello world.
+  runs simulation
 
-  ## Examples
-
-      iex> Gol.hello
-      :world
-
+  Example usage:
+  Gol.hello
   """
   def hello do
     pid = spawn(Gol.Board, :new, [%{x: 15, y: 15}])
