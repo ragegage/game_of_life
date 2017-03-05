@@ -95,7 +95,7 @@ defmodule Gol.Board do
   end
 
   defp cell_to_s(true) do
-    "A"
+    "G"
   end
   defp cell_to_s(false) do
     " "
