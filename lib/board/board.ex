@@ -1,133 +1,117 @@
 defmodule Gol.Board do
-  @doc """
-  board holds the cell_pids, its x and y boundaries, and a snapshot of the game state
+  @moduledoc """
+  board holds the cell_pids, its x and y boundaries, and the previous_state of the game state
+
+  {:ok, board} = Board.new(2, 2)
+  Board.turn(board)
   """
-  defstruct x: nil, y: nil, snapshot: %{}, cell_pids: [], count: 0, from: nil
+
+  defstruct x: nil, y: nil, previous_state: %{}, cells: []
   alias Gol.Cell
+  alias Gol.Board
 
   @doc """
-  receives x and y of board size and either a snapshot or none
-  creates cells
-
-  Examples of usage:
-  snapshot = %{{0,0} => true, {0,1} => true, {1,0} => true, {1,1} => true, }
-  pid = spawn(Gol.Board, :new, [%{x: 1, y: 1, snapshot: snapshot}])
-
-  snapshot = %{{0,0} => true, {0,1} => true, {0,2} => true, {1,0} => true, {1,1} => true, {1,2} => true, {2,0} => true, {2,1} => true, {2,2} => true, }
-
-  pid = spawn(Gol.Board, :new, [%{x: 2, y: 2, snapshot: snapshot}])
+  Use new/2 instead
   """
-  def new(%{x: x, y: y, snapshot: snapshot} = size) do
-    self = struct(%Gol.Board{}, size)
-    self
-    |> create_cells
-    |> loop
-  end
-  # pid = spawn(Gol.Board, :new, [%{x: 2, y: 2}])
-  def new(%{x: x, y: y} = size) do
-    self = struct(%Gol.Board{}, size)
-    %{self | snapshot: snapshot_gen(x, y)}
-    |> create_cells
-    |> loop
+  def start_link(board) do
+    Agent.start_link(fn -> struct(%Board{}, board) end)
   end
 
-  # send(pid, {:turn, self()})
-  defp loop(self) do
-    receive do
-      {:turn, from} ->
-        # sends cells a :turn message
-        Enum.map(self.cell_pids, fn cell ->
-          send(cell, {{:turn, self}, self()})
-        end)
-        loop(%{self | count: 0, from: from})
-      {:cell, data} ->
-        data
-        |> create_snapshot(self)
-        |> render
-        |> loop
-    end
+  @doc """
+  Tells the board to update its cells
+
+  Example usage:
+  Board.turn(board)
+  """
+  def turn(board) do
+    Agent.get(board, fn self ->
+      Enum.map(self.cells, fn cell ->
+        Cell.update(cell, self)
+      end)
+    end)
+    {:ok, board}
   end
 
-  defp create_cells(self) do
-    cells = Enum.map(self.x..0, fn row ->
-      Enum.map(self.y..0, fn col ->
-        spawn(Cell, :new, [%{position: {row, col}, alive?: self.snapshot[{row, col}]}])
+  @doc """
+  returns the board's cell's information
+
+  Example usage:
+  Board.get(board)
+  """
+  def get(board) do
+    cells = Agent.get(board, fn self ->
+      cells = Enum.map(self.cells, fn cell ->
+        Cell.get(cell)
+      end)
+    end)
+    # update the board
+    Agent.update(board, fn self ->
+      %{self | previous_state: create_new_state(self, cells)}
+    end)
+    cells
+    |> IO.inspect
+    |> Enum.map(fn cell -> cell.alive? end)
+    # |> Enum.chunk(3)
+    |> Enum.chunk(Agent.get(board, fn b -> b.x end))
+  end
+
+  defp create_new_state(state, cell_list) do
+    previous_state = cell_list
+    |> make_map
+    |> IO.inspect
+  end
+
+  @doc """
+  receives x and y of board size
+    + zero-based
+  creates (x * y) cells
+  returns {:ok, pid}
+
+  Example usage:
+  {:ok, board} = Board.new(2, 2)
+  """
+  def new(x, y) do
+    create_cells(x, y)
+    |> initial_state
+    |> clean_cells
+    |> start_link
+  end
+
+  defp create_cells(x, y) do
+    cells = Enum.map(1..x, fn row ->
+      Enum.map(1..y, fn col ->
+        {:ok, cell} = Gol.Cell.new(%{position: {row,col}, alive?: true})
+        %{cell_pid: cell, position: {x, y}, alive?: true}
       end)
     end)
     |> List.flatten
-    %{self | cell_pids: cells}
+    %{x: x, y: y, cells: cells}
   end
 
-  defp create_snapshot(cell, self) do
-    self = %{self | snapshot: Map.put(self.snapshot, cell.position, cell.alive?)}
-    %{self | count: self.count + 1}
+  defp initial_state(%{x: x, y: y, cells: cells} = board) do
+    initial_state = cells
+    |> make_map
+    %{x: x, y: y, cells: cells, previous_state: initial_state}
   end
 
-  # returns a string; allows IO.puts
-  defp render(%Gol.Board{x: x, y: y, snapshot: snapshot,
-                        cell_pids: _cells, count: count, from: from} = self)
-                        when count == x * y do
-    0..y
-    |> Enum.to_list
-    |> Enum.map(fn row_index -> row_to_s(row_index, x, snapshot) end)
-    |> Enum.join("\n")
-    |> print
-    send(self.from, {:print, self()})
-    self
-  end
-  defp render(%Gol.Board{x: x, y: y, snapshot: snapshot,
-                        cell_pids: _cells, count: count, from: from} = self) do
-    self
-  end
-
-  defp print(board) do
-    IO.puts(IO.ANSI.clear())
-    IO.puts(board)
-  end
-
-  defp row_to_s(row_index, cols, snapshot) do
-    0..cols
-    |> Enum.to_list
-    |> Enum.map(fn col_index ->
-      cell_to_s(Map.get(snapshot, {col_index, row_index}))
-    end)
-    |> Enum.join
-  end
-
-  defp cell_to_s(true) do
-    "G"
-  end
-  defp cell_to_s(false) do
-    " "
-  end
-  defp cell_to_s(other) do
-    IO.inspect other
-  end
-
-  defp snapshot_gen(x, y) do
-    0..y
-    |> Enum.to_list
-    |> Enum.map(fn row_index -> create_row(row_index, x) end)
-    |> List.flatten
-    |> make_map(%{})
-    |> IO.inspect
-  end
-  defp create_row(row_index, x) do
-    0..x
-    |> Enum.to_list
-    |> Enum.map(fn col_index -> create_cell(col_index, row_index) end)
-  end
-  defp create_cell(col, row) do
-    if (:rand.uniform(2) - 1 == 1) do
-      {col, row, true}
-    else
-      {col, row, false}
-    end
+  defp make_map(list) do
+    # h is in the form of {cell, x, y, alive?}
+    make_map(list, %{})
   end
   defp make_map([h | t], map) do
-    make_map(t, Map.put(map, {elem(h, 0), elem(h, 1)}, elem(h, 2)))
+    make_map(t, Map.put(map,
+                       {elem(h.position, 0), elem(h.position, 1)},
+                       h.alive?))
   end
   defp make_map([], map) do
     map
+  end
+
+  # {cell, x, y, alive?} -> cell
+  defp clean_cells(%{x: _x, y: _y, previous_state: _previous_state,
+                     cells: cells} = board) do
+    clean_cells = cells
+    |> Enum.map(fn cell -> cell.cell_pid end)
+    %{board | cells: clean_cells}
   end
 end

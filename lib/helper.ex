@@ -23,11 +23,10 @@ defmodule Gol.Helper do
     no negatives
     must be within board dimensions
   """
-  def neighbors(board, position) do
+  def neighbors(position) do
     [{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}]
     |> create_diffs(position)
     |> no_negatives
-    |> on_board(board)
   end
 
   defp create_diffs(diffs, position) do
@@ -36,15 +35,11 @@ defmodule Gol.Helper do
     end)
   end
 
+  # actually checks to make sure nothing's smaller than 1 since
+  # i moved this to a one-based system
   defp no_negatives(positions) do
     Enum.reject(positions, fn pos ->
-      elem(pos, 0) < 0 || elem(pos, 1) < 0
-    end)
-  end
-
-  defp on_board(positions, board) do
-    Enum.filter(positions, fn pos ->
-      elem(pos, 0) <= board.x && elem(pos, 1) <= board.y
+      elem(pos, 0) < 1 || elem(pos, 1) < 1
     end)
   end
 end

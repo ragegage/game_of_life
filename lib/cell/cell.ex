@@ -1,4 +1,3 @@
-require IEx
 defmodule Gol.Cell do
   @moduledoc """
   Each cell keeps track of its position and its alive? property (true or false)
@@ -8,7 +7,9 @@ defmodule Gol.Cell do
   alias Gol.Helper
   defstruct [alive?: nil, position: {nil, nil}]
 
-
+  @doc """
+  Use new/2 instead
+  """
   def start_link(values) do
     Agent.start_link(fn -> struct(%Cell{}, values) end)
   end
@@ -17,14 +18,14 @@ defmodule Gol.Cell do
   tells a cell to update its alive? property using the given information
 
   Example usage:
-  Cell.update(cell, %{snapshot: %{}})
+  Cell.update(cell, %{previous_state: %{}})
   """
   def update(position, board) do
     self = Agent.get(position, fn c -> c end)
     Helper.neighbors(self.position)
     # handles nils as well as zeroes
     |> Enum.reduce(0, fn(cell, acc) ->
-      location_value = Map.get(board.snapshot, cell)
+      location_value = Map.get(board.previous_state, cell)
       if location_value && location_value > 0, do: acc + 1, else: acc
     end)
     |> assess(self)
@@ -57,7 +58,6 @@ defmodule Gol.Cell do
   {:ok, cell} = Gol.Cell.new(%{position: {0,0}, alive?: true})
   """
   def new(values) do
-    # struct(%Cell{}, values)
     start_link(values)
   end
 
