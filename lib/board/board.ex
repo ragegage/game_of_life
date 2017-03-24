@@ -3,6 +3,7 @@ defmodule Gol.Board do
   board holds the cell_pids, its x and y boundaries, and the previous_state of the game state
 
   {:ok, board} = Board.new(2, 2)
+
   Board.turn(board)
   """
 
@@ -49,16 +50,13 @@ defmodule Gol.Board do
       %{self | previous_state: create_new_state(self, cells)}
     end)
     cells
-    |> IO.inspect
     |> Enum.map(fn cell -> cell.alive? end)
-    # |> Enum.chunk(3)
     |> Enum.chunk(Agent.get(board, fn b -> b.x end))
   end
 
   defp create_new_state(state, cell_list) do
     previous_state = cell_list
     |> make_map
-    |> IO.inspect
   end
 
   @doc """
@@ -80,8 +78,12 @@ defmodule Gol.Board do
   defp create_cells(x, y) do
     cells = Enum.map(1..x, fn row ->
       Enum.map(1..y, fn col ->
-        {:ok, cell} = Gol.Cell.new(%{position: {row,col}, alive?: true})
-        %{cell_pid: cell, position: {x, y}, alive?: true}
+        alive? = if(:rand.uniform(2) == 1, do: true, else: false)
+        {:ok, cell} = Gol.Cell.new(%{
+                                    position: {row,col},
+                                    alive?: alive?
+                                    })
+        %{cell_pid: cell, position: {x, y}, alive?: alive?}
       end)
     end)
     |> List.flatten
